@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Suara Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        darkBg: '#0f172a',
+                        cardBg: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Custom scrollbar for history */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.25); opacity: 0.2; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .mic-active {
+            animation: pulse-ring 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <header class="mb-6 text-center">
+        <h1 class="text-3xl font-extrabold bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
+            <i class="fa-solid fa-microphone-lines text-indigo-400"></i> Smart Voice Calculator
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">Ketik manual atau gunakan suara (contoh: "tujuh kali delapan", "akar sembilan")</p>
+    </header>
+
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Calculator Panel -->
+        <div class="md:col-span-2 bg-slate-800/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-6 shadow-2xl flex flex-col justify-between">
+            
+            <!-- Display Screen -->
+            <div class="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 mb-6 shadow-inner text-right">
+                <div id="operation-history" class="text-xs text-slate-400 min-h-[1.25rem] truncate font-mono"></div>
+                <div id="display" class="text-4xl sm:text-5xl font-bold tracking-wider text-white mt-1 overflow-x-auto whitespace-nowrap font-mono">0</div>
+            </div>
+
+            <!-- Voice Control Assistant Box -->
+            <div class="mb-6 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="mic-indicator-icon" class="w-10 h-10 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-400 transition-all">
+                        <i class="fa-solid fa-microphone text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Perintah Suara</div>
+                        <div id="voice-status" class="text-sm text-slate-300">Tekan tombol mic & mulai bicara...</div>
+                    </div>
+                </div>
+                <button id="mic-btn" onclick="toggleVoiceRecognition()" class="relative bg-indigo-600 hover:bg-indigo-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 focus:outline-none">
+                    <div id="mic-ring" class="absolute inset-0 rounded-full border-2 border-indigo-400 hidden"></div>
+                    <i id="mic-icon" class="fa-solid fa-microphone text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Keypad Grid -->
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="clearDisplay()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95">AC</button>
+                <button onclick="deleteDigit()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95"><i class="fa-solid fa-delete-left"></i></button>
+                <button onclick="appendOperator('%')" class="bg-slate-700 hover:bg-slate-600 text-indigo-300 py-3.5 rounded-xl font-semibold transition active:scale-95">%</button>
+                <button onclick="appendOperator('/')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95">÷</button>
+
+                <button onclick="appendNumber('7')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">7</button>
+                <button onclick="appendNumber('8')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">8</button>
+                <button onclick="appendNumber('9')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">9</button>
+                <button onclick="appendOperator('*')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95">×</button>
+
+                <button onclick="appendNumber('4')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">4</button>
+                <button onclick="appendNumber('5')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">5</button>
+                <button onclick="appendNumber('6')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">6</button>
+                <button onclick="appendOperator('-')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95">-</button>
+
+                <button onclick="appendNumber('1')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">1</button>
+                <button onclick="appendNumber('2')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">2</button>
+                <button onclick="appendNumber('3')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">3</button>
+                <button onclick="appendOperator('+')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 py-3.5 rounded-xl font-semibold transition active:scale-95">+</button>
+
+                <button onclick="appendSquareRoot()" class="bg-slate-700 hover:bg-slate-600 text-indigo-300 py-3.5 rounded-xl font-semibold transition active:scale-95">√</button>
+                <button onclick="appendNumber('0')" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">0</button>
+                <button onclick="appendDot()" class="bg-slate-700/50 hover:bg-slate-700 text-white py-3.5 rounded-xl font-semibold transition active:scale-95">.</button>
+                <button onclick="calculateResult()" class="bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white py-3.5 rounded-xl font-semibold shadow-lg transition active:scale-95">=</button>
+            </div>
+        </div>
+
+        <!-- History and Guide Panel -->
+        <div class="bg-slate-800/80 backdrop-blur-md border border-slate-700/60 rounded-3xl p-6 shadow-2xl flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Riwayat
+                    </h2>
+                    <button onclick="clearHistory()" class="text-xs text-rose-400 hover:text-rose-300 transition">Hapus</button>
+                </div>
+                
+                <!-- History Container -->
+                <div id="history-list" class="space-y-2.5 max-h-64 overflow-y-auto pr-1 text-sm">
+                    <div class="text-slate-500 text-center py-8 italic text-xs">Belum ada riwayat perhitungan.</div>
+                </div>
+            </div>
+
+            <!-- Voice Guide Box -->
+            <div class="mt-6 pt-4 border-t border-slate-700/60">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-indigo-300 mb-2">Panduan Perintah Suara:</h3>
+                <ul class="text-xs text-slate-400 space-y-1.5">
+                    <li>• <span class="text-slate-200">"Lima ditambah tiga"</span></li>
+                    <li>• <span class="text-slate-200">"Sepuluh dikurang empat"</span></li>
+                    <li>• <span class="text-slate-200">"Sembilan kali sembilan"</span></li>
+                    <li>• <span class="text-slate-200">"Seratus dibagi lima"</span></li>
+                    <li>• <span class="text-slate-200">"Akar sembilan belas"</span> atau <span class="text-slate-200">"Akar 16"</span></li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let currentInput = "0";
+        let calculationHistoryText = "";
+        let historyData = [];
+
+        const display = document.getElementById('display');
+        const operationHistory = document.getElementById('operation-history');
+        const historyList = document.getElementById('history-list');
+        const voiceStatus = document.getElementById('voice-status');
+        const micBtn = document.getElementById('mic-btn');
+        const micRing = document.getElementById('mic-ring');
+        const micIndicatorIcon = document.getElementById('mic-indicator-icon');
+
+        function updateDisplay() {
+            display.textContent = currentInput;
+            operationHistory.textContent = calculationHistoryText;
+            // Scroll display to right
+            display.scrollLeft = display.scrollWidth;
+        }
+
+        function appendNumber(num) {
+            if (currentInput === "0" || currentInput === "Error") {
+                currentInput = num;
+            } else {
+                currentInput += num;
+            }
+            updateDisplay();
+        }
+
+        function appendOperator(op) {
+            if (currentInput === "Error") return;
+            const lastChar = currentInput.slice(-1);
+            if (['+', '-', '*', '/', '%'].includes(lastChar)) {
+                currentInput = currentInput.slice(0, -1) + op;
+            } else {
+                currentInput += op;
+            }
+            updateDisplay();
+        }
+
+        function appendDot() {
+            if (currentInput === "Error") return;
+            const parts = currentInput.split(/[\+\-\*\/]/);
+            const lastPart = parts[parts.length - 1];
+            if (!lastPart.includes('.')) {
+                currentInput += '.';
+                updateDisplay();
+            }
+        }
+
+        function appendSquareRoot() {
+            if (currentInput === "0" || currentInput === "Error") {
+                currentInput = "Math.sqrt(";
+            } else {
+                currentInput += "*Math.sqrt(";
+            }
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentInput = "0";
+            calculationHistoryText = "";
+            updateDisplay();
+        }
+
+        function deleteDigit() {
+            if (currentInput === "Error" || currentInput.length === 1) {
+                currentInput = "0";
+            } else {
+                currentInput = currentInput.slice(0, -1);
+            }
+            updateDisplay();
+        }
+
+        function calculateResult() {
+            if (currentInput === "Error") return;
+            try {
+                calculationHistoryText = currentInput + " =";
+                // Safe evaluation of mathematical expression
+                let sanitizedExpr = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
+                let result = eval(sanitizedExpr);
+                
+                // Format decimal output if needed
+                if (!Number.isInteger(result)) {
+                    result = parseFloat(result.toFixed(6));
+                }
+
+                addHistory(currentInput, result);
+                currentInput = result.toString();
+                updateDisplay();
+            } catch (error) {
+                currentInput = "Error";
+                updateDisplay();
+            }
+        }
+
+        function addHistory(expression, result) {
+            const cleanExpr = expression.replace(/Math\.sqrt\(/g, '√(');
+            historyData.unshift({ expr: cleanExpr, res: result });
+            if (historyData.length > 15) historyData.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (historyData.length === 0) {
+                historyList.innerHTML = `<div class="text-slate-500 text-center py-8 italic text-xs">Belum ada riwayat perhitungan.</div>`;
+                return;
+            }
+            historyList.innerHTML = historyData.map(item => `
+                <div class="bg-slate-900/60 border border-slate-700/40 p-2.5 rounded-xl flex justify-between items-center">
+                    <span class="font-mono text-slate-400 text-xs">${item.expr}</span>
+                    <span class="font-mono font-bold text-indigo-300 text-sm">${item.res}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            historyData = [];
+            renderHistory();
+        }
+
+        // --- SPEECH RECOGNITION SETUP ---
+        let recognition = null;
+        let isListening = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceStatus.textContent = "Mendengarkan suara Anda...";
+                voiceStatus.classList.add("text-indigo-400", "font-medium");
+                micRing.classList.remove("hidden");
+                micRing.classList.add("mic-active");
+                micIndicatorIcon.classList.add("bg-indigo-600", "text-white");
+                micBtn.classList.add("bg-pink-600");
+            };
+
+            recognition.onresult = (event) => {
+                const speechText = event.results[0][0].transcript.toLowerCase();
+                voiceStatus.textContent = `Terucap: "${speechText}"`;
+                processVoiceCommand(speechText);
+            };
+
+            recognition.onerror = (event) => {
+                voiceStatus.textContent = "Gagal mendeteksi suara. Coba lagi.";
+                stopVoiceRecognition();
+            };
+
+            recognition.onend = () => {
+                stopVoiceRecognition();
+            };
+        } else {
+            voiceStatus.textContent = "Browser Anda tidak mendukung fitur suara.";
+            micBtn.disabled = true;
+            micBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+
+        function toggleVoiceRecognition() {
+            if (!recognition) return;
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    recognition.stop();
+                }
+            }
+        }
+
+        function stopVoiceRecognition() {
+            isListening = false;
+            micRing.classList.add("hidden");
+            micRing.classList.remove("mic-active");
+            micIndicatorIcon.classList.remove("bg-indigo-600", "text-white");
+            micBtn.classList.remove("bg-pink-600");
+            setTimeout(() => {
+                if (!isListening) {
+                    voiceStatus.textContent = "Tekan tombol mic & mulai bicara...";
+                    voiceStatus.classList.remove("text-indigo-400", "font-medium");
+                }
+            }, 3000);
+        }
+
+        // Voice Command Parser (Indonesian Numbers & Operators)
+        function processVoiceCommand(text) {
+            // Mapping spoken Indonesian words to symbols/numbers
+            let parsed = text
+                .replace(/plus|tambah|jumlah/g, '+')
+                .replace(/minus|kurang/g, '-')
+                .replace(/kali|bintang|perkalian/g, '*')
+                .replace(/bagi|per/g, '/')
+                .replace(/akar kuadrat|akar/g, 'Math.sqrt(')
+                .replace(/koma/g, '.')
+                .replace(/nol/g, '0')
+                .replace(/satu/g, '1')
+                .replace(/dua/g, '2')
+                .replace(/tiga/g, '3')
+                .replace(/empat/g, '4')
+                .replace(/lima/g, '5')
+                .replace(/enam/g, '6')
+                .replace(/tujuh/g, '7')
+                .replace(/delapan/g, '8')
+                .replace(/sembilan/g, '9')
+                .replace(/sepuluh/g, '10')
+                .replace(/seratus/g, '100')
+                .replace(/ribu/g, '*1000')
+                .replace(/juta/g, '*1000000')
+                .replace(/seribu/g, '1000')
+                .replace(/\s+/g, '');
+
+            // Handle commands like "sama dengan" or "hitung"
+            if (text.includes("sama dengan") || text.includes("hitung") || text.includes("hasilnya")) {
+                calculateResult();
+                return;
+            }
+
+            // Close brackets if akar was opened
+            if (parsed.includes('Math.sqrt(') && !parsed.endsWith(')')) {
+                parsed += ')';
+            }
+
+            // If it's a valid math snippet, update current input or calculate directly
+            if (/^[0-9\+\-\*\/\.\(\)]+$/.test(parsed)) {
+                currentInput = parsed;
+                updateDisplay();
+                // Auto calculate if valid expression completed
+                try {
+                    setTimeout(() => {
+                        calculateResult();
+                    }, 800);
+                } catch (e) {}
+            } else {
+                voiceStatus.textContent = `Perintah tidak dikenali: "${text}"`;
+            }
+        }
+    </script>
+</body>
+</html>
+```
